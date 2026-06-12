@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buat Laporan - Lost &amp; Found Kampus</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="navbar-brand">🔍 Lost &amp; Found</a>
+    <div class="navbar-right">
+      <span class="nav-user" id="nav-user"></span>
+      <a href="index.html" class="btn btn-secondary">← Kembali</a>
+      <button class="btn btn-secondary" id="nav-logout" onclick="logout()">Keluar</button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-header">
+      <h1 class="page-title">Buat Laporan Baru</h1>
+      <p class="page-subtitle">Laporkan barang yang hilang atau barang yang Anda temukan</p>
+    </div>
+
+    <div class="form-card">
+      <form id="create-form">
+
+        <div class="form-group">
+          <label for="namaBarang">Nama Barang *</label>
+          <input
+            type="text"
+            id="namaBarang"
+            class="form-control"
+            placeholder="Contoh: Flashdisk Kingston 16GB"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="kategori">Kategori *</label>
+          <select id="kategori" class="form-control" required>
+            <option value="">-- Pilih Kategori --</option>
+            <option value="Elektronik">Elektronik</option>
+            <option value="Pakaian">Pakaian</option>
+            <option value="Dokumen">Dokumen (KTM, SIM, dll)</option>
+            <option value="Aksesoris">Aksesoris</option>
+            <option value="Tas & Dompet">Tas &amp; Dompet</option>
+            <option value="Buku & ATK">Buku &amp; ATK</option>
+            <option value="Lainnya">Lainnya</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="lokasi">Lokasi *</label>
+          <input
+            type="text"
+            id="lokasi"
+            class="form-control"
+            placeholder="Contoh: Perpustakaan lantai 2, Gedung A ruang 101"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="status">Status *</label>
+          <select id="status" class="form-control" required>
+            <option value="">-- Pilih Status --</option>
+            <option value="Hilang">Hilang — saya kehilangan barang ini</option>
+            <option value="Ditemukan">Ditemukan — saya menemukan barang ini</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="deskripsi">Deskripsi</label>
+          <textarea
+            id="deskripsi"
+            class="form-control"
+            placeholder="Tambahkan ciri khas, warna, merek, atau keterangan lain..."
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="foto">Foto Barang (opsional)</label>
+          <input
+            type="file"
+            id="foto"
+            class="form-control"
+            accept="image/*"
+          >
+          <small style="color:#64748b; display:block; margin-top:6px;">
+            Foto akan otomatis dikompres. Maksimal hasil ~500 KB.
+          </small>
+          <img id="foto-preview" style="display:none; max-width:100%; max-height:220px; margin-top:12px; border-radius:8px;">
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" id="submit-btn" class="btn btn-primary">Buat Laporan</button>
+          <a href="index.html" class="btn btn-secondary">Batal</a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/create.js"></script>
+</body>
+</html>

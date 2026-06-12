@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /items/{itemId} {
+      // Semua orang (termasuk yang belum login) bisa membaca laporan
+      allow read: if true;
+
+      // Hanya user yang sudah login yang bisa membuat laporan
+      allow create: if request.auth != null;
+
+      // Hanya pemilik laporan yang bisa mengubah atau menghapus
+      allow update, delete: if request.auth != null
+                            && request.auth.uid == resource.data.userId;
+    }
+  }
+}
