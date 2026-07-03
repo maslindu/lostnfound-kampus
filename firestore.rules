@@ -8,9 +8,14 @@ service cloud.firestore {
       // Hanya user yang sudah login yang bisa membuat laporan
       allow create: if request.auth != null;
 
-      // Hanya pemilik laporan yang bisa mengubah atau menghapus
-      allow update, delete: if request.auth != null
-                            && request.auth.uid == resource.data.userId;
+      // Pemilik laporan bisa mengubah semua field dan menghapus laporan
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      
+      // Update diizinkan untuk pemilik laporan, ATAU untuk pengguna lain jika HANYA mengupdate field klaim
+      allow update: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['claimBy', 'claimCiriCiri', 'claimStatus', 'updatedAt'])
+      );
     }
   }
 }

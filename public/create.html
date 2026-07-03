@@ -35,8 +35,8 @@
       </div>
       <span class="nav-user" id="nav-user"></span>
       <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Ganti tema"><i data-lucide="moon" id="theme-icon"></i></button>
-      <a href="index.html" class="btn btn-secondary"><i data-lucide="arrow-left"></i> Kembali</a>
-      <button class="btn btn-secondary" id="nav-logout" onclick="logout()">Keluar</button>
+      <a href="index.html" class="btn btn-secondary"><i data-lucide="arrow-left"></i> <span class="nav-text">Kembali</span></a>
+      <button class="btn btn-secondary" id="nav-logout" onclick="logout()"><i data-lucide="log-out"></i> <span class="nav-text">Keluar</span></button>
     </div>
   </nav>
 
@@ -75,13 +75,13 @@
         </div>
 
         <div class="form-group">
-          <label for="lokasi">Lokasi *</label>
+          <label for="lokasi">Lokasi Umum *</label>
           <div style="display: flex; gap: 10px;">
             <input
               type="text"
               id="lokasi"
               class="form-control"
-              placeholder="Contoh: Perpustakaan lantai 2..."
+              placeholder="Contoh: Gedung 2 FMIPA..."
               required
             >
             <button type="button" class="btn btn-secondary" onclick="getLokasiSekarang()" style="flex-shrink: 0;" title="Pakai Lokasi Sekarang">
@@ -90,7 +90,20 @@
           </div>
           <input type="hidden" id="lat">
           <input type="hidden" id="lng">
-          <small id="lokasi-info" style="color: var(--text-muted); display:block; margin-top:6px; font-size:0.8rem;"></small>
+          <small id="lokasi-info" style="color: var(--text-muted); display:block; margin-top:6px; font-size:0.8rem;">
+            ⚠️ Jangan terlalu detail (hanya untuk publikasi umum).
+          </small>
+        </div>
+
+        <div class="form-group" id="lokasi-detail-group" style="display:none;">
+          <label for="lokasiDetail">Lokasi Detail</label>
+          <input
+            type="text"
+            id="lokasiDetail"
+            class="form-control"
+            placeholder="Contoh: FMIPA gedung 2 ruang B404..."
+          >
+          <small style="color: var(--text-muted); display:block; margin-top:6px; font-size:0.8rem;">Lokasi ini hanya akan dilihat oleh Anda dan pihak yang sudah di-ACC.</small>
         </div>
 
         <div class="form-group">
@@ -120,7 +133,7 @@
 
         <div class="form-group">
           <label for="status">Status *</label>
-          <select id="status" class="form-control" required>
+          <select id="status" class="form-control" onchange="toggleLokasiDetail()" required>
             <option value="">-- Pilih Status --</option>
             <option value="Hilang">Hilang — saya kehilangan barang ini</option>
             <option value="Ditemukan">Ditemukan — saya menemukan barang ini</option>

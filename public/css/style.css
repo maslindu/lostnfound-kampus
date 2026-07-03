@@ -677,12 +677,15 @@ textarea.form-control { resize: vertical; min-height: 110px; line-height: 1.6; }
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 640px) {
-  .navbar { padding: 0 16px; }
+  .navbar { padding: 0 12px; }
   .nav-user { display: none; }
+  .nav-text { display: none; }
+  .navbar-right .btn { padding: 10px; }
   .search-bar { flex-direction: column; }
   .search-input { min-width: unset; }
   .detail-header { flex-direction: column; gap: 16px; }
   .detail-actions { width: 100%; }
+  .detail-actions .btn { flex: 1; justify-content: center; }
   .info-label { width: 110px; }
   .form-card, .detail-card { padding: 22px; }
   .page-title { font-size: 1.45rem; }

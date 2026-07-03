@@ -43,6 +43,7 @@ function render() {
   const shouldBlur = isDitemukan && !isOwner && !isApproved;
   const showClaimButton = isDitemukan && !isOwner && !isApproved && !isPending;
   const showPendingStatus = isDitemukan && !isOwner && isPending;
+  const canSeeDetail = isOwner || (isApproved && currentUser && currentUser.uid === itemData.claimBy);
 
   document.getElementById('detail-content').innerHTML = `
     <div class="detail-header">
@@ -71,7 +72,8 @@ function render() {
 
     <div class="detail-info ${shouldBlur ? 'blurred-content' : ''}">
       <div class="info-row"><span class="info-label">Kategori</span><span>${escHtml(itemData.kategori)}</span></div>
-      <div class="info-row"><span class="info-label">Lokasi</span><span>${escHtml(itemData.lokasi)}</span></div>
+      <div class="info-row"><span class="info-label">Lokasi Umum</span><span>${escHtml(itemData.lokasi)}</span></div>
+      ${itemData.lokasiDetail && canSeeDetail ? `<div class="info-row"><span class="info-label">Lokasi Detail</span><span style="color:var(--color-ditemukan); font-weight:bold;">${escHtml(itemData.lokasiDetail)}</span></div>` : ''}
       <div class="info-row"><span class="info-label">Status</span><span>${escHtml(itemData.status)}</span></div>
       <div class="info-row"><span class="info-label">Tanggal</span><span>${formatDate(itemData.createdAt)}</span></div>
       <div class="info-row"><span class="info-label">Dilaporkan oleh</span><span>${escHtml(itemData.namaUser)}</span></div>

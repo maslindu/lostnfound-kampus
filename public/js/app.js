@@ -1,13 +1,16 @@
 let allItems = [];
+let currentUser = null;
 
 // Update navbar sesuai status login
 auth.onAuthStateChanged(user => {
+  currentUser = user;
   if (user) {
     updateNavbar(user);
   } else {
     const navLogin = document.getElementById('nav-login');
     if (navLogin) navLogin.style.display = 'inline-block';
   }
+  applyFilter(); // re-render with auth status
 });
 
 // ===== Load & Render =====
@@ -61,10 +64,19 @@ function renderItems(items) {
   }
 
   empty.style.display = 'none';
-  grid.innerHTML = items.map(item => `
+  grid.innerHTML = items.map(item => {
+    const isOwner = currentUser && currentUser.uid === item.userId;
+    const isDitemukan = item.status === 'Ditemukan';
+    const isApproved = item.claimStatus === 'approved';
+    const shouldBlur = isDitemukan && !isOwner && !isApproved;
+
+    return `
     <div class="card ${statusCardClass(item.status)}" onclick="window.location.href='detail.html?id=${item.id}'">
       ${item.foto
-        ? `<img class="card-img" src="${item.foto}" alt="${escHtml(item.namaBarang)}">`
+        ? `<div style="position:relative">
+             <img class="card-img ${shouldBlur ? 'blurred-content' : ''}" src="${item.foto}" alt="${escHtml(item.namaBarang)}">
+             ${shouldBlur ? `<div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:var(--text-primary); font-weight:bold; background:rgba(255,255,255,0.8); padding:4px 8px; border-radius:8px; font-size:0.8rem; z-index:1;">Disensor</div>` : ''}
+           </div>`
         : `<div class="card-img-placeholder"><i data-lucide="image" style="width:48px;height:48px;color:#cbd5e1;"></i></div>`}
       <div class="card-body">
         <span class="badge ${statusClass(item.status)}">${item.status}</span>
@@ -74,7 +86,8 @@ function renderItems(items) {
         <p class="card-meta"><i data-lucide="clock" class="meta-icon"></i> ${formatDate(item.createdAt)}</p>
       </div>
     </div>
-  `).join('');
+    `;
+  }).join('');
 
   setTimeout(() => lucide.createIcons(), 0);
 }

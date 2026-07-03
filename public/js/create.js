@@ -97,6 +97,20 @@ function togglePenyimpanan() {
   }
 }
 
+// ===== Opsi Lokasi Detail =====
+function toggleLokasiDetail() {
+  const status = document.getElementById('status').value;
+  const group = document.getElementById('lokasi-detail-group');
+  const input = document.getElementById('lokasiDetail');
+  
+  if (status === 'Ditemukan') {
+    group.style.display = 'block';
+  } else {
+    group.style.display = 'none';
+    if (input) input.value = '';
+  }
+}
+
 // Submit form buat laporan
 document.getElementById('create-form').addEventListener('submit', async e => {
   e.preventDefault();
@@ -109,6 +123,7 @@ document.getElementById('create-form').addEventListener('submit', async e => {
     const namaBarang = document.getElementById('namaBarang').value.trim();
     const kategori   = document.getElementById('kategori').value;
     const lokasi     = document.getElementById('lokasi').value.trim();
+    const lokasiDetail = document.getElementById('lokasiDetail') ? document.getElementById('lokasiDetail').value.trim() : '';
     const status     = document.getElementById('status').value;
     const deskripsi  = document.getElementById('deskripsi').value.trim();
 
@@ -131,6 +146,7 @@ document.getElementById('create-form').addEventListener('submit', async e => {
       namaBarang,
       kategori,
       lokasi,
+      lokasiDetail,
       status,
       deskripsi,
       foto,
