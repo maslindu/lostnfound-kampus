@@ -126,6 +126,7 @@ document.getElementById('create-form').addEventListener('submit', async e => {
     const lokasiDetail = document.getElementById('lokasiDetail') ? document.getElementById('lokasiDetail').value.trim() : '';
     const status     = document.getElementById('status').value;
     const deskripsi  = document.getElementById('deskripsi').value.trim();
+    const kontakPerson = document.getElementById('kontakPerson').value.trim();
 
     // Kompres foto (jika ada) jadi Base64
     let foto = '';
@@ -149,6 +150,7 @@ document.getElementById('create-form').addEventListener('submit', async e => {
       lokasiDetail,
       status,
       deskripsi,
+      kontakPerson,
       foto,
       penyimpanan,
       kontakPenyimpanan,

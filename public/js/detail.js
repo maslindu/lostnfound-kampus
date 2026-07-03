@@ -39,11 +39,11 @@ function render() {
   const isPending = itemData.claimStatus === 'pending';
   const hasMapData = itemData.lat && itemData.lng;
   
-  // Sembunyikan detail sensitif jika barang "Ditemukan", bukan milik sendiri, dan belum di-ACC
-  const shouldBlur = isDitemukan && !isOwner && !isApproved;
+  const canSeeDetail = isOwner || (isApproved && currentUser && currentUser.uid === itemData.claimBy);
+  // Sembunyikan detail sensitif jika barang "Ditemukan" dan user tidak diizinkan melihat detail
+  const shouldBlur = isDitemukan && !canSeeDetail;
   const showClaimButton = isDitemukan && !isOwner && !isApproved && !isPending;
   const showPendingStatus = isDitemukan && !isOwner && isPending;
-  const canSeeDetail = isOwner || (isApproved && currentUser && currentUser.uid === itemData.claimBy);
 
   document.getElementById('detail-content').innerHTML = `
     <div class="detail-header">
@@ -77,6 +77,7 @@ function render() {
       <div class="info-row"><span class="info-label">Status</span><span>${escHtml(itemData.status)}</span></div>
       <div class="info-row"><span class="info-label">Tanggal</span><span>${formatDate(itemData.createdAt)}</span></div>
       <div class="info-row"><span class="info-label">Dilaporkan oleh</span><span>${escHtml(itemData.namaUser)}</span></div>
+      ${itemData.kontakPerson ? `<div class="info-row"><span class="info-label">Kontak Person</span><span style="font-weight:bold;">${escHtml(itemData.kontakPerson)}</span></div>` : ''}
       ${itemData.kontakPenyimpanan ? `<div class="info-row"><span class="info-label">Info Penitipan</span><span style="font-weight:bold; color:var(--primary);">${escHtml(itemData.kontakPenyimpanan)}</span></div>` : ''}
     </div>
 
@@ -184,6 +185,10 @@ function render() {
           <div class="form-group">
             <label>Lokasi</label>
             <input type="text" id="e-lokasi" class="form-control" value="${escHtml(itemData.lokasi)}" required>
+          </div>
+          <div class="form-group">
+            <label>Kontak Person</label>
+            <input type="text" id="e-kontakPerson" class="form-control" value="${escHtml(itemData.kontakPerson || '')}" required>
           </div>
           <div class="form-group">
             <label>Deskripsi</label>
@@ -364,6 +369,7 @@ async function simpanEdit(e) {
       namaBarang: document.getElementById('e-nama').value.trim(),
       kategori:   document.getElementById('e-kategori').value,
       lokasi:     document.getElementById('e-lokasi').value.trim(),
+      kontakPerson: document.getElementById('e-kontakPerson').value.trim(),
       deskripsi:  document.getElementById('e-deskripsi').value.trim(),
       updatedAt:  firebase.firestore.FieldValue.serverTimestamp()
     };

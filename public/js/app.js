@@ -50,6 +50,13 @@ function applyFilter() {
     result = result.filter(item => item.status === status);
   }
 
+  // Pindahkan status 'Sudah Dikembalikan' ke urutan paling bawah
+  result.sort((a, b) => {
+    if (a.status === 'Sudah Dikembalikan' && b.status !== 'Sudah Dikembalikan') return 1;
+    if (a.status !== 'Sudah Dikembalikan' && b.status === 'Sudah Dikembalikan') return -1;
+    return 0; // Urutan default (createdAt desc) sudah ditangani oleh Firestore orderby
+  });
+
   renderItems(result);
 }
 
@@ -68,7 +75,8 @@ function renderItems(items) {
     const isOwner = currentUser && currentUser.uid === item.userId;
     const isDitemukan = item.status === 'Ditemukan';
     const isApproved = item.claimStatus === 'approved';
-    const shouldBlur = isDitemukan && !isOwner && !isApproved;
+    const canSeeDetail = isOwner || (isApproved && currentUser && currentUser.uid === item.claimBy);
+    const shouldBlur = isDitemukan && !canSeeDetail;
 
     return `
     <div class="card ${statusCardClass(item.status)}" onclick="window.location.href='detail.html?id=${item.id}'">

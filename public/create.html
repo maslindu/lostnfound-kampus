@@ -75,6 +75,15 @@
         </div>
 
         <div class="form-group">
+          <label for="status">Status *</label>
+          <select id="status" class="form-control" onchange="toggleLokasiDetail()" required>
+            <option value="">-- Pilih Status --</option>
+            <option value="Hilang">Hilang — saya kehilangan barang ini</option>
+            <option value="Ditemukan">Ditemukan — saya menemukan barang ini</option>
+          </select>
+        </div>
+
+        <div class="form-group">
           <label for="lokasi">Lokasi Umum *</label>
           <div style="display: flex; gap: 10px;">
             <input
@@ -132,12 +141,15 @@
         </div>
 
         <div class="form-group">
-          <label for="status">Status *</label>
-          <select id="status" class="form-control" onchange="toggleLokasiDetail()" required>
-            <option value="">-- Pilih Status --</option>
-            <option value="Hilang">Hilang — saya kehilangan barang ini</option>
-            <option value="Ditemukan">Ditemukan — saya menemukan barang ini</option>
-          </select>
+          <label for="kontakPerson">Kontak Person (IG/Email/WA) *</label>
+          <input
+            type="text"
+            id="kontakPerson"
+            class="form-control"
+            placeholder="Contoh: IG @namakamu atau email@kamu.com"
+            required
+          >
+          <small style="color: var(--text-muted); display:block; margin-top:6px; font-size:0.8rem;">Agar orang lain mudah menghubungimu.</small>
         </div>
 
         <div class="form-group">
