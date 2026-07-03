@@ -103,6 +103,31 @@ function render() {
       </div>
     ` : ''}
 
+    <!-- "SAYA MENEMUKAN BARANG INI" UNTUK PENGUNJUNG (BARANG HILANG) -->
+    ${itemData.status === 'Hilang' && !isOwner && !isPending && !isApproved ? `
+      <div class="claim-box">
+        <h3>Apakah Anda menemukan barang ini?</h3>
+        <p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:16px;">Bantu pemiliknya dengan menginformasikan lokasi barang tersebut.</p>
+        <button class="btn btn-primary" style="background:var(--color-ditemukan)" onclick="toggleClaimForm()"><i data-lucide="map-pin"></i> Saya Menemukan Barang Ini</button>
+        <div id="claim-form-box" style="display:none; margin-top:20px; text-align:left;">
+          <form onsubmit="submitClaim(event)">
+            <div class="form-group">
+              <label>Tinggalkan info lokasi Anda menitipkan barang ini atau kontak Anda</label>
+              <textarea id="claimCiri" class="form-control" required placeholder="Contoh: Barang saya titipkan ke Satpam Gedung A, atas nama Pak Budi..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="background:var(--color-ditemukan); width:100%; justify-content:center;">Kirim Informasi ke Pemilik</button>
+          </form>
+        </div>
+      </div>
+    ` : ''}
+
+    ${itemData.status === 'Hilang' && !isOwner && isPending ? `
+      <div class="claim-box">
+        <h3><i data-lucide="check-circle" style="display:inline-block; vertical-align:middle; margin-top:-2px;"></i> Informasi Terkirim</h3>
+        <p style="font-size:0.9rem; color:var(--text-secondary);">Terima kasih! Informasi Anda sedang menunggu konfirmasi dari pemilik barang.</p>
+      </div>
+    ` : ''}
+
     ${showPendingStatus ? `
       <div class="claim-box">
         <h3><i data-lucide="clock" style="display:inline-block; vertical-align:middle; margin-top:-2px;"></i> Klaim Sedang Diproses</h3>
@@ -110,17 +135,17 @@ function render() {
       </div>
     ` : ''}
 
-    <!-- ACC SECTION UNTUK PENEMU -->
+    <!-- ACC SECTION UNTUK PENEMU / PEMILIK (DITEMUKAN / HILANG) -->
     ${isOwner && isPending ? `
       <div class="claim-box" style="border-color:var(--color-ditemukan);">
-        <h3 style="color:var(--color-ditemukan);">Ada Permintaan Klaim!</h3>
-        <p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:12px;">Seseorang mengklaim barang ini dengan ciri-ciri berikut:</p>
+        <h3 style="color:var(--color-ditemukan);">${itemData.status === 'Hilang' ? 'Ada Yang Menemukan Barang Anda!' : 'Ada Permintaan Klaim!'}</h3>
+        <p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:12px;">${itemData.status === 'Hilang' ? 'Seseorang memberikan informasi terkait barang Anda:' : 'Seseorang mengklaim barang ini dengan ciri-ciri berikut:'}</p>
         <div style="background:var(--surface); padding:12px; border-radius:8px; border:1px solid var(--border); margin-bottom:16px; text-align:left;">
           <i>"${escHtml(itemData.claimCiriCiri)}"</i>
         </div>
         <div style="display:flex; gap:10px; justify-content:center;">
-          <button class="btn btn-primary" style="background:var(--color-ditemukan)" onclick="accClaim()"><i data-lucide="check"></i> Terima (ACC)</button>
-          <button class="btn btn-danger" onclick="tolakClaim()"><i data-lucide="x"></i> Tolak</button>
+          <button class="btn btn-primary" style="background:var(--color-ditemukan)" onclick="${itemData.status === 'Hilang' ? 'accFoundItem()' : 'accClaim()'}"><i data-lucide="check"></i> ${itemData.status === 'Hilang' ? 'Tandai Sudah Dikembalikan' : 'Terima (ACC)'}</button>
+          <button class="btn btn-danger" onclick="tolakClaim()"><i data-lucide="x"></i> ${itemData.status === 'Hilang' ? 'Bukan Barang Saya / Tolak' : 'Tolak'}</button>
         </div>
       </div>
     ` : ''}
@@ -287,6 +312,21 @@ async function accClaim() {
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     alert("Klaim di-ACC.");
+    loadItem();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function accFoundItem() {
+  if(!confirm("Tandai barang ini sebagai Sudah Dikembalikan?")) return;
+  try {
+    await db.collection('items').doc(itemId).update({
+      claimStatus: 'approved',
+      status: 'Sudah Dikembalikan',
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    alert("Barang berhasil ditandai sebagai Sudah Dikembalikan!");
     loadItem();
   } catch (err) {
     console.error(err);
