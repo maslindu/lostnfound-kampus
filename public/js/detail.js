@@ -188,7 +188,7 @@ function render() {
           </div>
           <div class="form-group">
             <label>Kontak Person</label>
-            <input type="text" id="e-kontakPerson" class="form-control" value="${escHtml(itemData.kontakPerson || '')}" required>
+            <input type="text" id="e-kontakPerson" class="form-control" value="${escHtml(itemData.kontakPerson || '')}">
           </div>
           <div class="form-group">
             <label>Deskripsi</label>
@@ -359,17 +359,31 @@ async function tolakClaim() {
 // ===== Actions & Helpers =====
 function toggleEditForm() {
   const box = document.getElementById('edit-form-box');
-  if (box) box.style.display = box.style.display === 'none' ? 'block' : 'none';
+  if (box) {
+    if (box.style.display === 'none') {
+      box.style.display = 'block';
+      box.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      box.style.display = 'none';
+    }
+  }
 }
 
 async function simpanEdit(e) {
   e.preventDefault();
   try {
+    const kontakPersonVal = document.getElementById('e-kontakPerson').value.trim();
+    if (!kontakPersonVal) {
+      alert("Mohon isi kolom Kontak Person (IG/Email/WA) agar Anda mudah dihubungi.");
+      document.getElementById('e-kontakPerson').focus();
+      return;
+    }
+
     const updates = {
       namaBarang: document.getElementById('e-nama').value.trim(),
       kategori:   document.getElementById('e-kategori').value,
       lokasi:     document.getElementById('e-lokasi').value.trim(),
-      kontakPerson: document.getElementById('e-kontakPerson').value.trim(),
+      kontakPerson: kontakPersonVal,
       deskripsi:  document.getElementById('e-deskripsi').value.trim(),
       updatedAt:  firebase.firestore.FieldValue.serverTimestamp()
     };
