@@ -5,6 +5,7 @@ if (!itemId) window.location.href = 'index.html';
 
 let currentUser = null;
 let itemData    = null;
+let mapInstance = null;
 
 auth.onAuthStateChanged(user => {
   currentUser = user;
@@ -13,7 +14,6 @@ auth.onAuthStateChanged(user => {
 });
 
 // ===== Load =====
-
 async function loadItem() {
   try {
     const doc = await db.collection('items').doc(itemId).get();
@@ -31,9 +31,18 @@ async function loadItem() {
 }
 
 // ===== Render =====
-
 function render() {
   const isOwner = currentUser && currentUser.uid === itemData.userId;
+  const isDitemukan = itemData.status === 'Ditemukan';
+  const isTitipan = itemData.penyimpanan === 'dititipkan';
+  const isApproved = itemData.claimStatus === 'approved';
+  const isPending = itemData.claimStatus === 'pending';
+  const hasMapData = itemData.lat && itemData.lng;
+  
+  // Sembunyikan detail sensitif jika barang "Ditemukan", bukan milik sendiri, dan belum di-ACC
+  const shouldBlur = isDitemukan && !isOwner && !isApproved;
+  const showClaimButton = isDitemukan && !isOwner && !isApproved && !isPending;
+  const showPendingStatus = isDitemukan && !isOwner && isPending;
 
   document.getElementById('detail-content').innerHTML = `
     <div class="detail-header">
@@ -43,29 +52,80 @@ function render() {
       </div>
       ${isOwner ? `
         <div class="detail-actions">
-          <button class="btn btn-secondary" onclick="toggleEditForm()">Edit</button>
-          <button class="btn btn-danger" onclick="hapusItem()">Hapus</button>
+          <button class="btn btn-secondary" onclick="toggleEditForm()"><i data-lucide="edit"></i> Edit</button>
+          <button class="btn btn-danger" onclick="hapusItem()"><i data-lucide="trash-2"></i> Hapus</button>
         </div>
       ` : ''}
     </div>
 
-    ${itemData.foto ? `<img class="detail-img" src="${itemData.foto}" alt="${escHtml(itemData.namaBarang)}">` : ''}
+    ${itemData.foto ? `
+      <div style="position:relative">
+        <img class="detail-img ${shouldBlur ? 'blurred-content' : ''}" src="${itemData.foto}" alt="${escHtml(itemData.namaBarang)}">
+        ${shouldBlur ? `<div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:var(--text-primary); font-weight:bold; background:rgba(255,255,255,0.8); padding:8px 16px; border-radius:8px;">Foto Disensor</div>` : ''}
+      </div>
+    ` : ''}
 
-    <div class="detail-info">
+    ${hasMapData && !shouldBlur ? `
+      <div id="map" class="map-container"></div>
+    ` : ''}
+
+    <div class="detail-info ${shouldBlur ? 'blurred-content' : ''}">
       <div class="info-row"><span class="info-label">Kategori</span><span>${escHtml(itemData.kategori)}</span></div>
       <div class="info-row"><span class="info-label">Lokasi</span><span>${escHtml(itemData.lokasi)}</span></div>
       <div class="info-row"><span class="info-label">Status</span><span>${escHtml(itemData.status)}</span></div>
       <div class="info-row"><span class="info-label">Tanggal</span><span>${formatDate(itemData.createdAt)}</span></div>
       <div class="info-row"><span class="info-label">Dilaporkan oleh</span><span>${escHtml(itemData.namaUser)}</span></div>
+      ${itemData.kontakPenyimpanan ? `<div class="info-row"><span class="info-label">Info Penitipan</span><span style="font-weight:bold; color:var(--primary);">${escHtml(itemData.kontakPenyimpanan)}</span></div>` : ''}
     </div>
 
     ${itemData.deskripsi ? `
-      <div class="detail-section">
+      <div class="detail-section ${shouldBlur ? 'blurred-content' : ''}">
         <h3>Deskripsi</h3>
         <p>${escHtml(itemData.deskripsi)}</p>
       </div>
-      <div class="divider"></div>
     ` : ''}
+
+    <!-- KLAIM SECTION UNTUK PENGUNJUNG -->
+    ${showClaimButton ? `
+      <div class="claim-box">
+        <h3>Apakah ini barang Anda?</h3>
+        <p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:16px;">Klaim barang ini dengan menyebutkan ciri-cirinya.</p>
+        <button class="btn btn-primary" onclick="toggleClaimForm()"><i data-lucide="hand"></i> Klaim Barang Ini</button>
+        <div id="claim-form-box" style="display:none; margin-top:20px; text-align:left;">
+          <form onsubmit="submitClaim(event)">
+            <div class="form-group">
+              <label>Sebutkan ciri-ciri spesifik barang ini (warna, isi, merk, dll)</label>
+              <textarea id="claimCiri" class="form-control" required placeholder="Contoh: Flashdisk merk Sandisk warna merah ada stiker kucing..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Kirim Permintaan Klaim</button>
+          </form>
+        </div>
+      </div>
+    ` : ''}
+
+    ${showPendingStatus ? `
+      <div class="claim-box">
+        <h3><i data-lucide="clock" style="display:inline-block; vertical-align:middle; margin-top:-2px;"></i> Klaim Sedang Diproses</h3>
+        <p style="font-size:0.9rem; color:var(--text-secondary);">Permintaan klaim Anda sedang menunggu persetujuan (ACC) dari penemu.</p>
+      </div>
+    ` : ''}
+
+    <!-- ACC SECTION UNTUK PENEMU -->
+    ${isOwner && isPending ? `
+      <div class="claim-box" style="border-color:var(--color-ditemukan);">
+        <h3 style="color:var(--color-ditemukan);">Ada Permintaan Klaim!</h3>
+        <p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:12px;">Seseorang mengklaim barang ini dengan ciri-ciri berikut:</p>
+        <div style="background:var(--surface); padding:12px; border-radius:8px; border:1px solid var(--border); margin-bottom:16px; text-align:left;">
+          <i>"${escHtml(itemData.claimCiriCiri)}"</i>
+        </div>
+        <div style="display:flex; gap:10px; justify-content:center;">
+          <button class="btn btn-primary" style="background:var(--color-ditemukan)" onclick="accClaim()"><i data-lucide="check"></i> Terima (ACC)</button>
+          <button class="btn btn-danger" onclick="tolakClaim()"><i data-lucide="x"></i> Tolak</button>
+        </div>
+      </div>
+    ` : ''}
+
+    <div class="divider"></div>
 
     ${isOwner ? `
       <div class="update-status-box">
@@ -82,6 +142,7 @@ function render() {
       <div id="edit-form-box" class="edit-form-box" style="display:none">
         <h3>Edit Laporan</h3>
         <form id="edit-form" onsubmit="simpanEdit(event)">
+          <!-- Edit Form Fields Omitted for Brevity but retained logically -->
           <div class="form-group">
             <label>Nama Barang</label>
             <input type="text" id="e-nama" class="form-control" value="${escHtml(itemData.namaBarang)}" required>
@@ -116,51 +177,17 @@ function render() {
       </div>
     ` : ''}
   `;
+
+  setTimeout(() => {
+    lucide.createIcons();
+    if (hasMapData && !shouldBlur) {
+      initMap(itemData.lat, itemData.lng);
+    }
+  }, 0);
 }
 
-// ===== Foto =====
-
-let fotoDihapus = false; // true bila user klik "Hapus Foto"
-
-// Kompres foto jadi Base64 (sama seperti di create.js, tanpa Firebase Storage)
-function compressImage(file, maxSize = 800, quality = 0.7) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const img = new Image();
-      img.onload = () => {
-        let { width, height } = img;
-        if (width > height && width > maxSize) {
-          height = Math.round(height * maxSize / width);
-          width = maxSize;
-        } else if (height > maxSize) {
-          width = Math.round(width * maxSize / height);
-          height = maxSize;
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.onerror = reject;
-      img.src = e.target.result;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-async function previewEditFoto(input) {
-  const file = input.files[0];
-  if (!file) return;
-  fotoDihapus = false;
-  const dataUrl = await compressImage(file);
-  const prev = document.getElementById('e-foto-preview');
-  prev.src = dataUrl;
-  prev.style.display = 'block';
-}
-
+// ===== Edit Foto Helper =====
+let fotoDihapus = false;
 function hapusFoto() {
   fotoDihapus = true;
   const prev = document.getElementById('e-foto-preview');
@@ -169,35 +196,127 @@ function hapusFoto() {
   if (input) input.value = '';
   alert('Foto akan dihapus setelah klik "Simpan Perubahan".');
 }
-
-// ===== Actions =====
-
-function toggleEditForm() {
+function compressImage(file, maxSize = 800, quality = 0.7) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > height && width > maxSize) { height = Math.round(height * maxSize / width); width = maxSize; } 
+        else if (height > maxSize) { width = Math.round(width * maxSize / height); height = maxSize; }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject; img.src = e.target.result;
+    };
+    reader.onerror = reject; reader.readAsDataURL(file);
+  });
+}
+async function previewEditFoto(input) {
+  const file = input.files[0];
+  if (!file) return;
   fotoDihapus = false;
+  const dataUrl = await compressImage(file);
+  const prev = document.getElementById('e-foto-preview');
+  prev.src = dataUrl; prev.style.display = 'block';
+}
+
+// ===== Map =====
+function initMap(lat, lng) {
+  if (mapInstance) {
+    mapInstance.remove();
+  }
+  mapInstance = L.map('map').setView([lat, lng], 16);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap'
+  }).addTo(mapInstance);
+
+  const marker = L.marker([lat, lng]).addTo(mapInstance);
+  
+  if (itemData.foto) {
+    marker.bindPopup(`<img src="${itemData.foto}" style="width:150px; border-radius:8px;">`).openPopup();
+  }
+}
+
+// ===== Claim Flow =====
+function toggleClaimForm() {
+  if (!currentUser) {
+    alert("Silakan Masuk/Login terlebih dahulu untuk mengklaim barang.");
+    window.location.href = 'login.html';
+    return;
+  }
+  const box = document.getElementById('claim-form-box');
+  box.style.display = box.style.display === 'none' ? 'block' : 'none';
+}
+
+async function submitClaim(e) {
+  e.preventDefault();
+  const ciri = document.getElementById('claimCiri').value.trim();
+  const isTitipan = itemData.penyimpanan === 'dititipkan';
+  
+  try {
+    await db.collection('items').doc(itemId).update({
+      claimBy: currentUser.uid,
+      claimCiriCiri: ciri,
+      claimStatus: isTitipan ? 'approved' : 'pending',
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    if (isTitipan) {
+      alert("Klaim berhasil! Barang dititipkan di pihak terkait. Silakan lihat lokasi dan detail kontak.");
+    } else {
+      alert("Permintaan klaim berhasil dikirim. Menunggu persetujuan penemu.");
+    }
+    
+    loadItem();
+  } catch (err) {
+    console.error(err);
+    alert("Gagal mengirim klaim.");
+  }
+}
+
+async function accClaim() {
+  if(!confirm("Yakin ingin memberikan ACC? Lokasi dan foto akan terlihat oleh pengklaim.")) return;
+  try {
+    await db.collection('items').doc(itemId).update({
+      claimStatus: 'approved',
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    alert("Klaim di-ACC.");
+    loadItem();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function tolakClaim() {
+  if(!confirm("Tolak klaim ini?")) return;
+  try {
+    await db.collection('items').doc(itemId).update({
+      claimBy: '',
+      claimCiriCiri: '',
+      claimStatus: '',
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    alert("Klaim ditolak.");
+    loadItem();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+// ===== Actions & Helpers =====
+function toggleEditForm() {
   const box = document.getElementById('edit-form-box');
   if (box) box.style.display = box.style.display === 'none' ? 'block' : 'none';
 }
 
-async function updateStatus(status) {
-  try {
-    await db.collection('items').doc(itemId).update({
-      status,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    itemData.status = status;
-    render();
-  } catch (err) {
-    console.error(err);
-    alert('Gagal update status.');
-  }
-}
-
 async function simpanEdit(e) {
   e.preventDefault();
-  const btn = document.getElementById('edit-btn');
-  btn.disabled = true;
-  btn.textContent = 'Menyimpan...';
-
   try {
     const updates = {
       namaBarang: document.getElementById('e-nama').value.trim(),
@@ -206,7 +325,7 @@ async function simpanEdit(e) {
       deskripsi:  document.getElementById('e-deskripsi').value.trim(),
       updatedAt:  firebase.firestore.FieldValue.serverTimestamp()
     };
-
+    
     // Foto: ganti dengan yang baru, hapus, atau biarkan apa adanya
     const fotoFile = document.getElementById('e-foto').files[0];
     if (fotoFile) {
@@ -218,41 +337,43 @@ async function simpanEdit(e) {
     }
 
     await db.collection('items').doc(itemId).update(updates);
-    Object.assign(itemData, updates);
-    render();
     alert('Laporan berhasil diperbarui!');
-
+    loadItem();
   } catch (err) {
     console.error(err);
     alert('Gagal menyimpan perubahan.');
-    btn.disabled = false;
-    btn.textContent = 'Simpan Perubahan';
   }
 }
 
 async function hapusItem() {
-  if (!confirm('Yakin ingin menghapus laporan ini? Tindakan ini tidak dapat dibatalkan.')) return;
+  if (!confirm('Yakin menghapus laporan ini?')) return;
   try {
     await db.collection('items').doc(itemId).delete();
-    alert('Laporan berhasil dihapus.');
     window.location.href = 'index.html';
   } catch (err) {
     console.error(err);
-    alert('Gagal menghapus laporan.');
   }
 }
 
-// ===== Helpers =====
+async function updateStatus(status) {
+  try {
+    await db.collection('items').doc(itemId).update({
+      status,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    loadItem();
+  } catch (err) {
+    console.error(err);
+  }
+}
 
 function statusClass(status) {
   return { 'Hilang': 'badge-danger', 'Ditemukan': 'badge-success', 'Sudah Dikembalikan': 'badge-info' }[status] || 'badge-secondary';
 }
-
 function formatDate(ts) {
   if (!ts) return '-';
   return new Date(ts.seconds * 1000).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 }
-
 function escHtml(str) {
   if (!str) return '';
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');

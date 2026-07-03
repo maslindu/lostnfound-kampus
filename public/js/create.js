@@ -54,6 +54,49 @@ fotoInput.addEventListener('change', async () => {
   fotoPreview.style.display = 'block';
 });
 
+// ===== Geolokasi =====
+function getLokasiSekarang() {
+  const info = document.getElementById('lokasi-info');
+  const latInput = document.getElementById('lat');
+  const lngInput = document.getElementById('lng');
+
+  if (!navigator.geolocation) {
+    info.textContent = "Geolokasi tidak didukung oleh browser Anda.";
+    info.style.color = "red";
+    return;
+  }
+
+  info.textContent = "Mencari lokasi...";
+  info.style.color = "var(--text-muted)";
+
+  navigator.geolocation.getCurrentPosition(pos => {
+    latInput.value = pos.coords.latitude;
+    lngInput.value = pos.coords.longitude;
+    info.textContent = "✓ Koordinat berhasil disimpan (" + pos.coords.latitude.toFixed(5) + ", " + pos.coords.longitude.toFixed(5) + ")";
+    info.style.color = "var(--color-ditemukan)";
+  }, err => {
+    console.error(err);
+    info.textContent = "Gagal mengambil lokasi. Pastikan izin GPS diberikan.";
+    info.style.color = "red";
+  });
+}
+
+// ===== Opsi Penyimpanan =====
+function togglePenyimpanan() {
+  const val = document.querySelector('input[name="penyimpanan"]:checked').value;
+  const group = document.getElementById('kontak-group');
+  const input = document.getElementById('kontakPenyimpanan');
+  
+  if (val === 'dititipkan') {
+    group.style.display = 'block';
+    input.required = true;
+  } else {
+    group.style.display = 'none';
+    input.required = false;
+    input.value = '';
+  }
+}
+
 // Submit form buat laporan
 document.getElementById('create-form').addEventListener('submit', async e => {
   e.preventDefault();
@@ -79,6 +122,11 @@ document.getElementById('create-form').addEventListener('submit', async e => {
       }
     }
 
+    const penyimpanan = document.querySelector('input[name="penyimpanan"]:checked').value;
+    const kontakPenyimpanan = document.getElementById('kontakPenyimpanan').value.trim();
+    const lat = document.getElementById('lat').value ? parseFloat(document.getElementById('lat').value) : null;
+    const lng = document.getElementById('lng').value ? parseFloat(document.getElementById('lng').value) : null;
+
     await db.collection('items').add({
       namaBarang,
       kategori,
@@ -86,6 +134,13 @@ document.getElementById('create-form').addEventListener('submit', async e => {
       status,
       deskripsi,
       foto,
+      penyimpanan,
+      kontakPenyimpanan,
+      lat,
+      lng,
+      claimStatus: '', 
+      claimBy: '',
+      claimCiriCiri: '',
       userId:    currentUser.uid,
       namaUser:  currentUser.displayName,
       emailUser: currentUser.email,

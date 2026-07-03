@@ -1,3 +1,23 @@
+// ===== Theme =====
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const next = isDark ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  _syncThemeIcon();
+}
+
+function _syncThemeIcon() {
+  const btn = document.getElementById('theme-toggle');
+  if (!btn) return;
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  btn.textContent = isDark ? '☀️' : '🌙';
+  btn.title = isDark ? 'Mode Terang' : 'Mode Gelap';
+}
+
+// Sync icon on load (theme already applied via inline script in <head>)
+document.addEventListener('DOMContentLoaded', _syncThemeIcon);
+
 function login() {
   const provider = new firebase.auth.GoogleAuthProvider();
   auth.signInWithPopup(provider)

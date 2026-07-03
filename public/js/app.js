@@ -62,25 +62,31 @@ function renderItems(items) {
 
   empty.style.display = 'none';
   grid.innerHTML = items.map(item => `
-    <div class="card" onclick="window.location.href='detail.html?id=${item.id}'">
+    <div class="card ${statusCardClass(item.status)}" onclick="window.location.href='detail.html?id=${item.id}'">
       ${item.foto
         ? `<img class="card-img" src="${item.foto}" alt="${escHtml(item.namaBarang)}">`
-        : `<div class="card-img-placeholder">📦</div>`}
+        : `<div class="card-img-placeholder"><i data-lucide="image" style="width:48px;height:48px;color:#cbd5e1;"></i></div>`}
       <div class="card-body">
         <span class="badge ${statusClass(item.status)}">${item.status}</span>
         <h3 class="card-title">${escHtml(item.namaBarang)}</h3>
-        <p class="card-meta">📁 ${escHtml(item.kategori)}</p>
-        <p class="card-meta">📍 ${escHtml(item.lokasi)}</p>
-        <p class="card-meta">🕒 ${formatDate(item.createdAt)}</p>
+        <p class="card-meta"><i data-lucide="folder" class="meta-icon"></i> ${escHtml(item.kategori)}</p>
+        <p class="card-meta"><i data-lucide="map-pin" class="meta-icon"></i> ${escHtml(item.lokasi)}</p>
+        <p class="card-meta"><i data-lucide="clock" class="meta-icon"></i> ${formatDate(item.createdAt)}</p>
       </div>
     </div>
   `).join('');
+
+  setTimeout(() => lucide.createIcons(), 0);
 }
 
 // ===== Helpers =====
 
 function statusClass(status) {
   return { 'Hilang': 'badge-danger', 'Ditemukan': 'badge-success', 'Sudah Dikembalikan': 'badge-info' }[status] || 'badge-secondary';
+}
+
+function statusCardClass(status) {
+  return { 'Hilang': 'card-hilang', 'Ditemukan': 'card-ditemukan', 'Sudah Dikembalikan': 'card-dikembalikan' }[status] || '';
 }
 
 function formatDate(ts) {

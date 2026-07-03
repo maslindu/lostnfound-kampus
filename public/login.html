@@ -3,13 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login - Lost & Found Kampus</title>
+  <title>Login - Lost &amp; Found Kampus</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <script>
+    (function() {
+      var t = localStorage.getItem('theme');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
 </head>
 <body>
   <div class="login-page">
     <div class="login-card">
-      <div class="login-logo">🔍</div>
+      <span class="login-logo">🔍</span>
       <h1 class="login-title">Lost &amp; Found Kampus</h1>
       <p class="login-subtitle">
         Platform pelaporan barang hilang dan ditemukan<br>di lingkungan kampus
@@ -23,6 +32,9 @@
         </svg>
         Masuk dengan Google
       </button>
+      <div style="margin-top: 20px;">
+        <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Ganti tema" style="margin: 0 auto;">🌙</button>
+      </div>
     </div>
   </div>
 
@@ -31,7 +43,6 @@
   <script src="js/firebase-config.js"></script>
   <script src="js/auth.js"></script>
   <script>
-    // Jika sudah login, langsung ke halaman utama
     auth.onAuthStateChanged(user => {
       if (user) window.location.href = 'index.html';
     });
